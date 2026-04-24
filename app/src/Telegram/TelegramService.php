@@ -38,11 +38,13 @@ class TelegramService implements MessengerServiceInterface
 
     private function getWebhookUrl(): string
     {
-        return $this->router->generate(
+        $url = $this->router->generate(
             'telegram_hook',
             [],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
+
+        return preg_replace('/^http:/', 'https:', $url);
     }
 
     public function setMessenger(Messenger $messenger): static
