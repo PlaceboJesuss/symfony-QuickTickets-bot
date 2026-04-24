@@ -1,0 +1,107 @@
+services:
+
+  app:
+    build:
+      context: .
+    volumes:
+      - ./app:/var/www
+      - ./supervisord.${APP_ENV}.conf:/etc/supervisor/conf.d/supervisord.conf
+    networks:
+      - app_net
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_CONNECTION: ${DB_CONNECTION}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DEFAULT_URI: ${APP_URL}
+      APP_ENV: ${APP_ENV}
+      APP_API_TOKEN: ${APP_API_TOKEN}
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: ./nginx
+    depends_on:
+      app:
+        condition: service_started
+    volumes:
+      - ./app:/var/www
+      - ./certbot/www:/var/www/certbot
+      - certbot-etc:/etc/letsencrypt
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      APP_ENV: ${APP_ENV}
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - app_net
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:10.11
+    container_name: mariadb
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_net
+    restart: unless-stopped
+    command:
+      - --max_connections=50
+      - --innodb_buffer_pool_size=64M
+      - --key_buffer_size=16M
+      - --performance_schema=off
+      - --skip-name-resolve
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_ABSOLUTE_URI: /pma/
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - app_net
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    depends_on:
+      nginx:
+        condition: service_started
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      sh -c "trap exit TERM;
+      while :; do
+      certbot renew --webroot -w /var/www/certbot --quiet;
+      sleep 12h;
+      done"
+    restart: unless-stopped
+
+networks:
+  app_net:
+
+volumes:
+  db_data:
+  certbot-etc:
+  certbot-var:
