@@ -4,6 +4,7 @@ namespace App\Security;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Security\Core\User\InMemoryUser;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
@@ -29,7 +30,11 @@ class ApiTokenAuthenticator extends AbstractAuthenticator
             throw new AuthenticationException('Invalid API token');
         }
 
-        return new SelfValidatingPassport(new UserBadge('api'));
+        return new SelfValidatingPassport(
+            new UserBadge('api', function () {
+                return new InMemoryUser('api', null, ['ROLE_API']);
+            })
+        );
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): JsonResponse
