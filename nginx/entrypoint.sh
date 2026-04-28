@@ -1,51 +1,48 @@
 #!/bin/sh
 set -e
 
-#!/bin/sh
-set -e
+CERT="/etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem"
 
-CERT_PATH="/etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem"
-
-echo "Checking SSL certificate..."
-
-if [ ! -f "$CERT_PATH" ]; then
-    echo "❌ Certificate not found → starting HTTP mode"
-
+build_http() {
+    echo "🔵 HTTP mode"
     envsubst '${APP_DOMAIN}' \
         < /etc/nginx/http.conf.template \
         > /etc/nginx/conf.d/default.conf
+}
 
-    nginx
-
-    echo "⏳ Waiting nginx to be ready..."
-    sleep 3
-
-    echo "🚀 Requesting certificate..."
-
-    certbot certonly \
-        --webroot \
-        --webroot-path=/var/www/certbot \
-        -d ${APP_DOMAIN} \
-        -d www.${APP_DOMAIN} \
-        --email ${LETSENCRYPT_EMAIL} \
-        --agree-tos \
-        --no-eff-email \
-        --non-interactive
-
-    echo "♻️ Reloading nginx with SSL..."
-
+build_https() {
+    echo "🟢 HTTPS mode"
     envsubst '${APP_DOMAIN}' \
         < /etc/nginx/https.conf.template \
         > /etc/nginx/conf.d/default.conf
+}
 
-    nginx -s reload
-
-else
-    echo "✅ Certificate exists → starting HTTPS"
-
-    envsubst '${APP_DOMAIN}' \
-        < /etc/nginx/https.conf.template \
-        > /etc/nginx/conf.d/default.conf
-
+if [ "$APP_ENV" != "prod" ]; then
+    build_http
     exec nginx -g "daemon off;"
 fi
+
+# PROD MODE
+build_http
+
+nginx
+
+echo "⏳ Starting certificate watcher..."
+
+while true; do
+    if [ -f "$CERT" ]; then
+        echo "✅ Certificate found → switching to HTTPS"
+
+        build_https
+        nginx -s reload
+
+        echo "🚀 HTTPS enabled"
+        break
+    fi
+
+    echo "⌛ Waiting for certificate..."
+    sleep 30
+done
+
+# keep container running
+exec nginx -g "daemon off;"

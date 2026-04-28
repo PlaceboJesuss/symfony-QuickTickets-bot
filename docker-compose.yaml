@@ -85,19 +85,31 @@ services:
     build:
       context: ./certbot
     depends_on:
-      nginx:
-        condition: service_started
+      - nginx
     volumes:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - ./certbot/www:/var/www/certbot
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - LETSENCRYPT_EMAIL=${APP_EMAIL}
     entrypoint: >
-      sh -c "trap exit TERM;
+      sh -c "
+      trap exit TERM;
+  
+      if [ ! -f /etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem ]; then
+        echo '🚀 First certificate request...';
+        certbot certonly --webroot -w /var/www/certbot \
+          -d ${APP_DOMAIN} -d www.${APP_DOMAIN} \
+          --email ${LETSENCRYPT_EMAIL} \
+          --agree-tos --no-eff-email --non-interactive;
+      fi;
+  
       while :; do
-      certbot renew --webroot -w /var/www/certbot --quiet;
-      sleep 12h;
-      done"
-    restart: unless-stopped
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        sleep 12h;
+      done
+      "
 
 networks:
   app_net:
