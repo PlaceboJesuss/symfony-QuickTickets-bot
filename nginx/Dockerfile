@@ -3,8 +3,7 @@ FROM nginx:alpine
 RUN apk add --no-cache openssl
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY dev.conf.template /etc/nginx/conf.d/dev.template
-COPY prod.conf.template /etc/nginx/conf.d/prod.template
+COPY conf.template /etc/nginx/conf.d/default.conf
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 

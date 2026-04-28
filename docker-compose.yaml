@@ -82,7 +82,8 @@ services:
     restart: unless-stopped
 
   certbot:
-    image: certbot/certbot
+    build:
+      context: ./certbot
     depends_on:
       nginx:
         condition: service_started
