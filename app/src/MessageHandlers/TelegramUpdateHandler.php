@@ -11,7 +11,9 @@ use App\Resolver\MessengerContextResolver;
 use App\Telegram\DTO\CallbackQueryUpdateDto;
 use App\Telegram\DTO\MessageUpdateDto;
 use App\Telegram\Factory\UpdateFactory;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
+#[AsMessageHandler]
 class TelegramUpdateHandler
 {
     public function __construct(
