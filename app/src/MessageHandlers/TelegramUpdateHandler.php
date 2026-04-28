@@ -38,11 +38,11 @@ class TelegramUpdateHandler
             $update = $this->updateFactory->fromArray($message->getPayload());
 
             if ($update instanceof CallbackQueryUpdateDto) {
-                $this->logger->info("CallbackQueryUpdateDto", $update->getData());
+                $this->logger->info("CallbackQueryUpdateDto", [$update->getData()]);
 
                 $this->callbackResolver->resolve($messengerContext, $update);
             } elseif ($update instanceof MessageUpdateDto) {
-                $this->logger->info("MessageUpdateDto", $update->getText());
+                $this->logger->info("MessageUpdateDto", [$update->getText()]);
 
                 $this->commandResolver->resolve($messengerContext, $update);
             }
