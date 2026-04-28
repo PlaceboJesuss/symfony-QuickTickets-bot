@@ -1,41 +1,46 @@
 #!/bin/sh
 set -e
 
-# -----------------------------
-# Configuration
-# -----------------------------
-CERTBOT_DOMAIN=${APP_DOMAIN}
-CERTBOT_EMAIL=${APP_EMAIL}
+CERT_PATH="/etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem"
+
+echo ">>> Starting entrypoint..."
 
 # -----------------------------
-# Получение нового сертификата, если его нет
+# 1. INITIAL CERT (if missing)
 # -----------------------------
-if [ ! -d "/etc/letsencrypt/live/$CERTBOT_DOMAIN" ]; then
-    echo ">>> No SSL certificate found for $CERTBOT_DOMAIN."
-    echo ">>> Starting standalone certbot to obtain initial certificate..."
+if [ ! -f "$CERT_PATH" ]; then
+    echo ">>> No certificate found. Requesting initial cert..."
 
-    # certbot сам слушает порт 80, nginx должен быть остановлен
-    certbot certonly --standalone \
-        --preferred-challenges http \
-        --email "$CERTBOT_EMAIL" \
-        --agree-tos --no-eff-email \
-        -d "$CERTBOT_DOMAIN" -d "www.$CERTBOT_DOMAIN"
+    certbot certonly \
+        --webroot -w /var/www/certbot \
+        --email "$APP_EMAIL" \
+        --agree-tos \
+        --no-eff-email \
+        --non-interactive \
+        -d "$APP_DOMAIN" \
+        -d "www.$APP_DOMAIN"
 else
-    echo ">>> SSL certificate already exists, skipping initial obtain."
+    echo ">>> Certificate already exists."
 fi
 
 # -----------------------------
-# Запуск nginx
+# 2. START NGINX
 # -----------------------------
 echo ">>> Starting Nginx..."
 nginx -g 'daemon off;' &
 
 # -----------------------------
-# Автообновление сертификата каждые 12 часов
+# 3. AUTO RENEW LOOP
 # -----------------------------
-echo ">>> Starting auto-renewal loop..."
-while :; do
-    certbot renew --standalone --quiet
-    nginx -s reload || true
-    sleep 12h & wait $!
+echo ">>> Starting renewal loop..."
+
+while true; do
+    certbot renew --webroot -w /var/www/certbot --quiet
+
+    # reload only if nginx is running
+    if pgrep nginx >/dev/null; then
+        nginx -s reload || true
+    fi
+
+    sleep 12h
 done
