@@ -11,6 +11,7 @@ use App\Resolver\MessengerContextResolver;
 use App\Telegram\DTO\CallbackQueryUpdateDto;
 use App\Telegram\DTO\MessageUpdateDto;
 use App\Telegram\Factory\UpdateFactory;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -22,8 +23,8 @@ class TelegramUpdateHandler
         private readonly CallbackResolver $callbackResolver,
         private readonly MessengerContextResolver $messengerContextResolver,
         private readonly MessengerRepository $messengerRepository,
-    )
-    {
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     public function __invoke(TelegramUpdateMessage $message)
@@ -33,11 +34,16 @@ class TelegramUpdateHandler
         foreach ($messengers as $messenger) {
             $messengerContext = $this->messengerContextResolver->resolve($messenger);
 
+            $this->logger->info("payload", $message->getPayload());
             $update = $this->updateFactory->fromArray($message->getPayload());
 
             if ($update instanceof CallbackQueryUpdateDto) {
+                $this->logger->info("CallbackQueryUpdateDto", $update->getData());
+
                 $this->callbackResolver->resolve($messengerContext, $update);
             } elseif ($update instanceof MessageUpdateDto) {
+                $this->logger->info("MessageUpdateDto", $update->getText());
+
                 $this->commandResolver->resolve($messengerContext, $update);
             }
         }
