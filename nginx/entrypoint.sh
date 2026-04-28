@@ -25,7 +25,7 @@ fi
 # PROD MODE
 build_http
 
-nginx
+nginx -g "daemon off;"
 
 echo "⏳ Starting certificate watcher..."
 
@@ -45,4 +45,4 @@ while true; do
 done
 
 # keep container running
-exec nginx -g "daemon off;"
+exec nginx -s reload
