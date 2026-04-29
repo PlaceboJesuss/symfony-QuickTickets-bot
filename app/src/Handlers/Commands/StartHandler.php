@@ -38,6 +38,8 @@ class StartHandler implements CommandHandlerInterface
             ->keyboardButton("Удалить заведение")
             ->build();
 
+        echo  123456;
+
         $context->service->sendMessage($build);
     }
 }

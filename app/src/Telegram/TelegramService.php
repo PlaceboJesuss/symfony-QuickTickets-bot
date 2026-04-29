@@ -28,6 +28,8 @@ class TelegramService implements MessengerServiceInterface
 
     public function sendMessage(MessagePayloadDto $payload): void
     {
+        echo  223456;
+
         $this->client->send($payload);
     }
 

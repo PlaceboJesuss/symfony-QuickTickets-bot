@@ -24,6 +24,8 @@ class TelegramClient implements MessengerClientInterface
             return;
         }
 
+        echo  323456;
+
         $this->sendMessage($payload);
     }
 
@@ -40,7 +42,11 @@ class TelegramClient implements MessengerClientInterface
             $data['reply_markup'] = $replyMarkup;
         }
 
-        $this->request('sendMessage', $data);
+       $response = $this->request('sendMessage', $data);
+
+        echo  "code = " . $response->getStatusCode();
+        echo $response->getContent(false);
+
     }
 
     private function sendPhoto(MessagePayloadDto $payload): void
@@ -106,9 +112,9 @@ class TelegramClient implements MessengerClientInterface
         );
     }
 
-    private function request(string $method, array $data): void
+    private function request(string $method, array $data): ResponseInterface
     {
-        $this->http->request(
+        return $this->http->request(
             'POST',
             $this->url($method),
             [
