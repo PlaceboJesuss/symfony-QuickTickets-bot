@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 class MessengerUser
 {
     #[ORM\Id]
-    #[ORM\Column]
+    #[ORM\Column(type: "bigint")]
     private ?int $chatId = null;
 
     #[ORM\Id]
@@ -21,6 +21,7 @@ class MessengerUser
     private ?Messenger $messenger = null;
 
     #[ORM\Column(length: 255)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?string $username = null;
 
     #[ORM\Column(nullable: false)]
