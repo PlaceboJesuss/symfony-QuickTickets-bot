@@ -10,5 +10,6 @@ COPY https.conf.template /etc/nginx/https.conf.template
 COPY http.conf.template /etc/nginx/http.conf.template
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/watch-certs.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
