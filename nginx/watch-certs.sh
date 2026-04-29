@@ -3,7 +3,10 @@
 CERT_DIR="/etc/letsencrypt/live/${APP_DOMAIN}"
 
 echo "👀 Watching certificate changes in $CERT_DIR"
-sleep 1
+
+while [ ! -d "$CERT_DIR" ]; do
+    sleep 5
+done
 
 while inotifywait -e modify,create,delete,move -r "$CERT_DIR"; do
     echo "🔁 Certificate changed → reloading nginx"
