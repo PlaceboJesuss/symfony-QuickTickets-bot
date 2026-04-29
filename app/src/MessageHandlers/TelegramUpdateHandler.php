@@ -29,14 +29,11 @@ class TelegramUpdateHandler
 
     public function __invoke(TelegramUpdateMessage $message)
     {
-        echo  "12345";
-
         $messengers = $this->messengerRepository->findAllByType(MessengerTypeEnum::TELEGRAM);
 
         foreach ($messengers as $messenger) {
             $messengerContext = $this->messengerContextResolver->resolve($messenger);
 
-            echo  json_encode($message->getPayload());
             $this->logger->info("payload", $message->getPayload());
             $update = $this->updateFactory->fromArray($message->getPayload());
 
