@@ -4,6 +4,7 @@ set -e
 CERT_PATH="/etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem"
 
 echo ">>> Starting entrypoint..."
+sleep 10
 
 if [ ! -f "$CERT_PATH" ]; then
     echo ">>> No certificate found. Requesting initial cert..."
