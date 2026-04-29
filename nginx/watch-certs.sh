@@ -20,6 +20,7 @@ while [ ! -d "$CERT_DIR" ]; do
     sleep 5
 done
 
+sleep 5
 build_https
 echo "🔁 Certificate create → reloading nginx"
 nginx -s reload || true
