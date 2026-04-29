@@ -24,8 +24,6 @@ else
     build_http
 fi
 
-nginx
-
 # старт watcher в фоне
 /usr/local/bin/watch-certs.sh &
 
